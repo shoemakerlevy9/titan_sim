@@ -1,0 +1,25 @@
+<?xml version="1.0" ?>
+<sdf version="1.4">
+<world name="test_world">
+    <include>
+        <uri>model://sun</uri>
+    </include>
+    <include>
+        <uri>model://ground_plane</uri>
+    </include>
+
+<model name="Tree">
+    <pose>0 0 0  0 0 0</pose>
+    <static>true</static>
+    <link name="body">
+        <visual name="visual">
+            <geometry>
+                <mesh>
+		    <uri>/home/nick/catkin_ws/src/titan_gazebo/models/house.dae</uri>
+		</mesh>
+            </geometry>
+        </visual>
+    </link>
+</model>
+</world>
+</sdf>

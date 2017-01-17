@@ -1,0 +1,43 @@
+<launch>
+
+  <!-- these are the arguments you can pass this launch file, for example paused:=true -->
+  <arg name="paused" default="false"/>
+  <arg name="use_sim_time" default="true"/>
+  <arg name="gui" default="true"/>
+  <arg name="headless" default="false"/>
+  <arg name="debug" default="false"/>
+
+  <!-- We resume the logic in empty_world.launch, changing only the name of the world to be launched -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find rrbot_gazebo)/worlds/digilabs.sdf"/>
+    <arg name="debug" value="$(arg debug)"/>
+    <arg name="gui" value="$(arg gui)"/>
+    <arg name="paused" value="$(arg paused)"/>
+    <arg name="use_sim_time" value="$(arg use_sim_time)"/>
+    <arg name="headless" value="$(arg headless)"/>
+  </include>
+
+  <!-- Spawn titan and push robot_description to factory and spawn robot in gazebo-->
+  <param name="robot_description" textfile="$(find titan_description)/urdf/titan.urdf" />
+
+  <!-- Spawn a robot into Gazebo >
+  <node pkg="gazebo_ros" type="spawn_model" name="spawn_urdf" args="-param robot_description -urdf" /-->
+
+  <!-- Spawn a robot model into Gazebo -->
+  <node pkg="gazebo_ros" type="spawn_model" name="spawn_model"
+        args="-urdf -model titan -param robot_description " respawn="false" output="log" />
+
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" respawn="true">
+    <param name="publish_frequency" type="double" value="30.0" />
+    <param name="use_gui" value="true" />
+    <remap from="/joint_states" to="/titan/joint_states" /> 
+  </node>
+
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" >
+    <param name="publish_frequency" type="double" value="30.0" />
+    <remap from="/joint_states" to="/titan/joint_states" /> 
+  </node>
+
+  <rosparam command="load" file="$(find titan_description)/config/control.yaml" />
+
+</launch>

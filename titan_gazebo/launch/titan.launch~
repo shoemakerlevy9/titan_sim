@@ -1,0 +1,46 @@
+<launch>
+
+  <!-- We resume the logic in empty_world.launch, changing only the name of the world to be launched -->
+  <include file="$(find sim)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find titan_gazebo)/worlds/titan.world"/>
+    <arg name="paused" value="false"/>
+    <arg name="use_sim_time" value="true"/>
+    <arg name="gui" value="true"/>
+    <arg name="headless" value="false"/>
+    <arg name="debug" value="false"/>
+  </include>
+
+  <!-- Spawn snoobot and push robot_description to factory and spawn robot in gazebo-->
+  <param name="robot_description" textfile="$(find titan_description)/urdf/titan.urdf" />
+  <param name="titan/robot_description" textfile="$(find titan_description)/urdf/titan.urdf" />
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" respawn="true">
+    <param name="publish_frequency" type="double" value="30.0" />
+    <param name="use_gui" value="true" />
+    <!--remap from="/joint_states" to="/titan/joint_states" /--> 
+  </node>
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" >
+    <param name="publish_frequency" type="double" value="30.0" />
+    <!--remap from="/joint_states" to="/titan/joint_states" /--> 
+  </node>
+  <node name="spawn_model" pkg="gazebo_ros" type="spawn_model"
+        args="-urdf -z 0.1 -param robot_description -model robot" respawn="false" output="log" />
+
+  <!-- Launch RVIZ -->
+  <arg name="rvizconfig" default="$(find sim)/rviz/defualt.rviz" />
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" />
+
+
+  <rosparam command="load" file="$(find titan_description)/config/control.yaml" />
+
+  <!-- This node loads the two controllers into a controller manager (real or simulated). The
+  controllers are defined in config/control.yaml -->
+  <node name="snoobot_controller_spawner" pkg="controller_manager" type="spawner"
+    args="joint_state_controller
+          diff_drive_controller
+          --shutdown-timeout 3"/>
+
+  <!-- Manual robot steering -->
+  <node name="rqt_robot_steering" pkg="rqt_robot_steering" type="rqt_robot_steering">
+    <param name="default_topic" value="/titan/diff_drive_controller/cmd_vel"/>
+  </node>
+</launch>
